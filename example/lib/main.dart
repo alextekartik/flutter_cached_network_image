@@ -1,7 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'main_mobile.dart' if (dart.library.html) 'main_web.dart';
 
-void main() => runApp(MyApp());
+Future main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await platformInit();
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -35,7 +40,7 @@ class MyHomePage extends StatelessWidget {
             _sizedContainer(
               CachedNetworkImage(
                 placeholder: (context, url) => CircularProgressIndicator(),
-                imageUrl: 'http://via.placeholder.com/200x150',
+                imageUrl: 'http://placekitten.com/g/200/300',
               ),
             ),
             _sizedContainer(
@@ -86,6 +91,7 @@ class MyHomePage extends StatelessWidget {
     );
   }
 
+  /*
   _gridView() {
     return GridView.builder(
       itemCount: 250,
@@ -108,6 +114,8 @@ class MyHomePage extends StatelessWidget {
     print(error);
     return Center(child: const Icon(Icons.error));
   }
+
+   */
 
   Widget _sizedContainer(Widget child) => SizedBox(
         width: 300.0,

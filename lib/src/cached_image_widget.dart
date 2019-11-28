@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -173,6 +175,7 @@ class CachedNetworkImage extends StatefulWidget {
 
 class _ImageTransitionHolder {
   final FileInfo image;
+  Uint8List bytes;
   AnimationController animationController;
   final Object error;
   Curve curve;
@@ -303,19 +306,44 @@ class CachedNetworkImageState extends State<CachedNetworkImage>
 
         var children = <Widget>[];
         for (var holder in _imageHolders) {
-          if (holder.error != null) {
-            children.add(_transitionWidget(
-                holder: holder, child: _errorWidget(context, holder.error)));
-          } else if (holder.image == null) {
-            children.add(_transitionWidget(
-                holder: holder, child: _placeholder(context)));
-          } else {
-            children.add(_transitionWidget(
+          Widget _getErrorWidget() {
+            return _transitionWidget(
+                holder: holder, child: _errorWidget(context, holder.error));
+          }
+
+          Widget _getPlaceholderWidget() {
+            return _transitionWidget(
+                holder: holder, child: _placeholder(context));
+          }
+
+          Widget _getBytesWidget() {
+            return _transitionWidget(
                 holder: holder,
                 child: _image(
                   context,
-                  FileImage(holder.image.file),
-                )));
+                  MemoryImage(holder.bytes),
+                ));
+          }
+
+          if (holder.error != null) {
+            children.add(_getErrorWidget());
+          } else if (holder.image == null) {
+            children.add(_getPlaceholderWidget());
+          } else if (holder.bytes == null) {
+            children.add(FutureBuilder<Uint8List>(
+                future: holder.image.file.readAsBytes(),
+                builder: (context, snapshot) {
+                  holder.bytes = snapshot.data;
+                  if (snapshot.data != null) {
+                    return _getBytesWidget();
+                  } else if (snapshot.error != null) {
+                    return _getErrorWidget();
+                  } else {
+                    return _getPlaceholderWidget();
+                  }
+                }));
+          } else {
+            children.add(_getBytesWidget());
           }
         }
 

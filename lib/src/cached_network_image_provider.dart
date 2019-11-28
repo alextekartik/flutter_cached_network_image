@@ -1,11 +1,10 @@
 import 'dart:async' show Future;
-import 'dart:io' show File;
-import 'dart:typed_data';
-import 'dart:ui' as ui show instantiateImageCodec, Codec;
+import 'dart:ui' as ui show Codec;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:tekartik_common_utils/common_utils_import.dart';
 
 typedef void ErrorListener();
 
@@ -39,9 +38,10 @@ class CachedNetworkImageProvider
   }
 
   @override
-  ImageStreamCompleter load(CachedNetworkImageProvider key) {
+  ImageStreamCompleter load(
+      CachedNetworkImageProvider key, DecoderCallback decode) {
     return MultiFrameImageStreamCompleter(
-      codec: _loadAsync(key),
+      codec: _loadAsync(key, decode),
       scale: key.scale,
 // TODO enable information collector on next stable release of flutter
 //      informationCollector: () sync* {
@@ -54,16 +54,19 @@ class CachedNetworkImageProvider
     );
   }
 
-  Future<ui.Codec> _loadAsync(CachedNetworkImageProvider key) async {
+  Future<ui.Codec> _loadAsync(
+      CachedNetworkImageProvider key, DecoderCallback decode) async {
     var mngr = cacheManager ?? DefaultCacheManager();
     var file = await mngr.getSingleFile(url, headers: headers);
     if (file == null) {
       if (errorListener != null) errorListener();
       return Future<ui.Codec>.error("Couldn't download or retrieve file.");
     }
-    return await _loadAsyncFromFile(key, file);
+    return await decode(await file.readAsBytes());
+    // return await _loadAsyncFromFile(key, file);
   }
 
+  /*
   Future<ui.Codec> _loadAsyncFromFile(
       CachedNetworkImageProvider key, File file) async {
     assert(key == this);
@@ -77,6 +80,7 @@ class CachedNetworkImageProvider
 
     return await ui.instantiateImageCodec(bytes);
   }
+   */
 
   @override
   bool operator ==(dynamic other) {
